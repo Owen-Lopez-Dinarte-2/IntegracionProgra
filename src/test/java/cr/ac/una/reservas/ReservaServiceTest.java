@@ -13,6 +13,7 @@ import cr.ac.una.reservas.model.Reserva;
 import cr.ac.una.reservas.service.ReservaService;
 import cr.ac.una.reservas.strategy.ValidacionBasica;
 import cr.ac.una.reservas.strategy.ValidacionCapacidad;
+import cr.ac.una.reservas.strategy.ValidacionHorario;
 
 class ReservaServiceTest {
 
@@ -23,17 +24,31 @@ class ReservaServiceTest {
         service = new ReservaService();
         service.agregarValidador(new ValidacionBasica());
         service.agregarValidador(new ValidacionCapacidad(30));
+        service.agregarValidador(new ValidacionHorario(7, 22));
+    }
+
+    private Reserva crearReserva(
+            String codigo,
+            String solicitante,
+            String laboratorio,
+            LocalDate fecha,
+            int inicio,
+            int fin,
+            int personas
+    ) {
+        return new Reserva(
+                codigo, solicitante, laboratorio,
+                fecha, inicio, fin, personas
+        );
     }
 
     @Test
     void debeAceptarReservaValida() throws Exception {
 
-        Reserva reserva = new Reserva(
-                "R-001", "Ana", "Lab 1",
-                LocalDate.now(), 8, 10, 20
+        service.registrarReserva(
+                crearReserva("R-001", "Ana", "Lab 1",
+                        LocalDate.now(), 8, 10, 20)
         );
-
-        service.registrarReserva(reserva);
 
         assertEquals(1, service.listarReservas().size());
     }
@@ -41,55 +56,49 @@ class ReservaServiceTest {
     @Test
     void debeRechazarCantidadPersonasCero() {
 
-        Reserva reserva = new Reserva(
+        Reserva reserva = crearReserva(
                 "R-002", "Luis", "Lab 1",
                 LocalDate.now(), 10, 12, 0
         );
 
-        assertThrows(
-                ReservaInvalidaException.class,
-                () -> service.registrarReserva(reserva)
-        );
+        assertThrows(ReservaInvalidaException.class,
+                () -> service.registrarReserva(reserva));
     }
 
     @Test
     void debeRechazarHorarioInvertido() {
 
-        Reserva reserva = new Reserva(
+        Reserva reserva = crearReserva(
                 "R-003", "Carlos", "Lab 1",
                 LocalDate.now(), 12, 8, 10
         );
 
-        assertThrows(
-                ReservaInvalidaException.class,
-                () -> service.registrarReserva(reserva)
-        );
+        assertThrows(ReservaInvalidaException.class,
+                () -> service.registrarReserva(reserva));
     }
 
     @Test
     void debeRechazarHorasIguales() {
 
-        Reserva reserva = new Reserva(
+        Reserva reserva = crearReserva(
                 "R-004", "Maria", "Lab 1",
                 LocalDate.now(), 9, 9, 10
         );
 
-        assertThrows(
-                ReservaInvalidaException.class,
-                () -> service.registrarReserva(reserva)
-        );
+        assertThrows(ReservaInvalidaException.class,
+                () -> service.registrarReserva(reserva));
     }
 
     @Test
     void debeRechazarReservasSuperpuestas()
             throws Exception {
 
-        Reserva primera = new Reserva(
+        Reserva primera = crearReserva(
                 "R-005", "Ana", "Lab 1",
                 LocalDate.now(), 8, 10, 20
         );
 
-        Reserva segunda = new Reserva(
+        Reserva segunda = crearReserva(
                 "R-006", "Luis", "Lab 1",
                 LocalDate.now(), 9, 11, 15
         );
@@ -101,10 +110,7 @@ class ReservaServiceTest {
                 () -> service.registrarReserva(segunda)
         );
 
-        assertTrue(
-                error.getMessage().contains("horario")
-        );
-
+        assertTrue(error.getMessage().contains("horario"));
         assertEquals(1, service.listarReservas().size());
     }
 
@@ -112,18 +118,15 @@ class ReservaServiceTest {
     void debeAceptarHorariosConsecutivos()
             throws Exception {
 
-        Reserva primera = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-007", "Ana", "Lab 1",
                 LocalDate.now(), 8, 10, 20
-        );
+        ));
 
-        Reserva segunda = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-008", "Luis", "Lab 1",
                 LocalDate.now(), 10, 12, 15
-        );
-
-        service.registrarReserva(primera);
-        service.registrarReserva(segunda);
+        ));
 
         assertEquals(2, service.listarReservas().size());
     }
@@ -132,18 +135,15 @@ class ReservaServiceTest {
     void debeAceptarDiferentesLaboratorios()
             throws Exception {
 
-        Reserva primera = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-009", "Ana", "Lab 1",
                 LocalDate.now(), 8, 10, 20
-        );
+        ));
 
-        Reserva segunda = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-010", "Luis", "Lab 2",
                 LocalDate.now(), 8, 10, 15
-        );
-
-        service.registrarReserva(primera);
-        service.registrarReserva(segunda);
+        ));
 
         assertEquals(2, service.listarReservas().size());
     }
@@ -154,18 +154,15 @@ class ReservaServiceTest {
 
         LocalDate fecha = LocalDate.now();
 
-        Reserva primera = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-011", "Ana", "Lab 1",
                 fecha, 8, 10, 20
-        );
+        ));
 
-        Reserva segunda = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-012", "Luis", "Lab 1",
                 fecha.plusDays(1), 8, 10, 15
-        );
-
-        service.registrarReserva(primera);
-        service.registrarReserva(segunda);
+        ));
 
         assertEquals(2, service.listarReservas().size());
     }
@@ -174,7 +171,7 @@ class ReservaServiceTest {
     void debeAceptarHorarioDeReservaCancelada()
             throws Exception {
 
-        Reserva primera = new Reserva(
+        Reserva primera = crearReserva(
                 "R-013", "Ana", "Lab 1",
                 LocalDate.now(), 8, 10, 20
         );
@@ -182,12 +179,10 @@ class ReservaServiceTest {
         service.registrarReserva(primera);
         primera.cancelar();
 
-        Reserva segunda = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-014", "Luis", "Lab 1",
                 LocalDate.now(), 9, 11, 15
-        );
-
-        service.registrarReserva(segunda);
+        ));
 
         assertEquals(2, service.listarReservas().size());
     }
@@ -196,23 +191,64 @@ class ReservaServiceTest {
     void debeRechazarCodigoDuplicado()
             throws Exception {
 
-        Reserva primera = new Reserva(
+        service.registrarReserva(crearReserva(
                 "R-015", "Ana", "Lab 1",
                 LocalDate.now(), 8, 10, 20
-        );
+        ));
 
-        Reserva segunda = new Reserva(
+        Reserva segunda = crearReserva(
                 "R-015", "Luis", "Lab 2",
                 LocalDate.now(), 10, 12, 15
         );
 
-        service.registrarReserva(primera);
-
-        assertThrows(
-                ReservaInvalidaException.class,
-                () -> service.registrarReserva(segunda)
-        );
+        assertThrows(ReservaInvalidaException.class,
+                () -> service.registrarReserva(segunda));
 
         assertEquals(1, service.listarReservas().size());
+    }
+
+    @Test
+    void debeRechazarAntesDeApertura() {
+
+        Reserva reserva = crearReserva(
+                "R-016", "Ana", "Lab 1",
+                LocalDate.now(), 6, 9, 15
+        );
+
+        assertThrows(ReservaInvalidaException.class,
+                () -> service.registrarReserva(reserva));
+    }
+
+    @Test
+    void debeRechazarDespuesDelCierre() {
+
+        Reserva reserva = crearReserva(
+                "R-017", "Luis", "Lab 1",
+                LocalDate.now(), 21, 23, 15
+        );
+
+        assertThrows(ReservaInvalidaException.class,
+                () -> service.registrarReserva(reserva));
+    }
+
+    @Test
+    void debeAceptarHorarioLimite()
+            throws Exception {
+
+        service.registrarReserva(crearReserva(
+                "R-018", "Ana", "Lab 1",
+                LocalDate.now(), 7, 22, 15
+        ));
+
+        assertEquals(1, service.listarReservas().size());
+    }
+
+    @Test
+    void debeRechazarConfiguracionInvalida() {
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ValidacionHorario(22, 7)
+        );
     }
 }
