@@ -1,3 +1,4 @@
+
 package cr.ac.una.reservas.service;
 
 import java.util.ArrayList;
@@ -5,6 +6,7 @@ import java.util.List;
 
 import cr.ac.una.reservas.exception.ReservaInvalidaException;
 import cr.ac.una.reservas.model.Reserva;
+import cr.ac.una.reservas.model.EstadoReserva;
 import cr.ac.una.reservas.observer.ReservaObserver;
 import cr.ac.una.reservas.strategy.ValidadorReserva;
 
@@ -36,10 +38,42 @@ public class ReservaService {
             Reserva reserva
     ) throws ReservaInvalidaException {
 
-        for (ValidadorReserva validador
-                : validadores) {
+        if (reserva == null) {
+            throw new ReservaInvalidaException(
+                    "La reserva no puede ser nula"
+            );
+        }
 
+        for (ValidadorReserva validador : validadores) {
             validador.validar(reserva);
+        }
+
+        if (reserva.getCodigo() == null
+                || reserva.getCodigo().isBlank()) {
+            throw new ReservaInvalidaException(
+                    "El codigo es obligatorio"
+            );
+        }
+
+        if (reserva.getLaboratorio() == null
+                || reserva.getLaboratorio().isBlank()) {
+            throw new ReservaInvalidaException(
+                    "El laboratorio es obligatorio"
+            );
+        }
+
+        if (reserva.getFecha() == null) {
+            throw new ReservaInvalidaException(
+                    "La fecha es obligatoria"
+            );
+        }
+
+        if (reserva.getHoraInicio()
+                >= reserva.getHoraFinal()) {
+            throw new ReservaInvalidaException(
+                    "La hora final debe ser posterior "
+                    + "a la hora inicial"
+            );
         }
 
         validarCodigoDuplicado(reserva);
@@ -62,7 +96,7 @@ public class ReservaService {
 
                 throw new ReservaInvalidaException(
                         "Ya existe una reserva "
-                        + "con ese código"
+                        + "con ese codigo"
                 );
             }
         }
@@ -72,21 +106,46 @@ public class ReservaService {
             Reserva nueva
     ) throws ReservaInvalidaException {
 
-        /*
-         * TODO:
-         * Implementar la regla que impida
-         * reservas superpuestas para el mismo
-         * laboratorio y fecha.
-         */
+        for (Reserva existente : reservas) {
+
+            if (existente.getEstado()
+                    == EstadoReserva.CANCELADA) {
+                continue;
+            }
+
+            boolean mismoLaboratorio =
+                    existente.getLaboratorio()
+                            .equalsIgnoreCase(
+                                    nueva.getLaboratorio()
+                            );
+
+            boolean mismaFecha =
+                    existente.getFecha()
+                            .equals(nueva.getFecha());
+
+            boolean horariosCruzan =
+                    nueva.getHoraInicio()
+                            < existente.getHoraFinal()
+                    && nueva.getHoraFinal()
+                            > existente.getHoraInicio();
+
+            if (mismoLaboratorio
+                    && mismaFecha
+                    && horariosCruzan) {
+
+                throw new ReservaInvalidaException(
+                        "El laboratorio ya esta reservado "
+                        + "en ese horario"
+                );
+            }
+        }
     }
 
     private void notificarRegistro(
             Reserva reserva
     ) {
 
-        for (ReservaObserver observer
-                : observers) {
-
+        for (ReservaObserver observer : observers) {
             observer.reservaRegistrada(reserva);
         }
     }
