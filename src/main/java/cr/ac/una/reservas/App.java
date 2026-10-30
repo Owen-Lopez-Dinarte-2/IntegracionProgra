@@ -2,6 +2,7 @@ package cr.ac.una.reservas;
 
 import java.time.LocalDate;
 
+import cr.ac.una.reservas.observer.ResumenObserver;
 import cr.ac.una.reservas.exception.ReservaInvalidaException;
 import cr.ac.una.reservas.model.Reserva;
 import cr.ac.una.reservas.observer.ConsolaObserver;
@@ -27,6 +28,10 @@ public class App {
         service.agregarObserver(
                 new ConsolaObserver()
         );
+        
+        service.agregarObserver(
+        new ResumenObserver()
+);
 
         Reserva reserva =
                 new Reserva(
