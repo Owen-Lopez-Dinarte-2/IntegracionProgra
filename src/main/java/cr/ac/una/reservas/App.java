@@ -1,4 +1,3 @@
-
 package cr.ac.una.reservas;
 
 import java.time.LocalDate;
@@ -6,6 +5,7 @@ import java.time.LocalDate;
 import cr.ac.una.reservas.exception.ReservaInvalidaException;
 import cr.ac.una.reservas.model.Reserva;
 import cr.ac.una.reservas.observer.ConsolaObserver;
+import cr.ac.una.reservas.observer.ResumenObserver;
 import cr.ac.una.reservas.service.ReservaService;
 import cr.ac.una.reservas.strategy.ValidacionBasica;
 import cr.ac.una.reservas.strategy.ValidacionCapacidad;
@@ -17,21 +17,12 @@ public class App {
 
         ReservaService service = new ReservaService();
 
-        service.agregarValidador(
-                new ValidacionBasica()
-        );
+        service.agregarValidador(new ValidacionBasica());
+        service.agregarValidador(new ValidacionCapacidad(30));
+        service.agregarValidador(new ValidacionHorario(7, 22));
 
-        service.agregarValidador(
-                new ValidacionCapacidad(30)
-        );
-
-        service.agregarValidador(
-                new ValidacionHorario(7, 22)
-        );
-
-        service.agregarObserver(
-                new ConsolaObserver()
-        );
+        service.agregarObserver(new ConsolaObserver());
+        service.agregarObserver(new ResumenObserver());
 
         Reserva reserva = new Reserva(
                 "R-001",
@@ -44,7 +35,6 @@ public class App {
         );
 
         try {
-
             service.registrarReserva(reserva);
 
             System.out.println();
@@ -55,7 +45,6 @@ public class App {
             }
 
         } catch (ReservaInvalidaException ex) {
-
             System.out.println(
                     "No se pudo registrar: "
                     + ex.getMessage()

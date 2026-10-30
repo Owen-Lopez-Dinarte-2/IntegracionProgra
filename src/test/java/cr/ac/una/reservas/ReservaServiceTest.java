@@ -1,4 +1,3 @@
-
 package cr.ac.una.reservas;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,6 +52,8 @@ class ReservaServiceTest {
         assertEquals(1, service.listarReservas().size());
     }
 
+    
+    
     @Test
     void debeRechazarCantidadPersonasCero() {
 
@@ -251,4 +252,8 @@ class ReservaServiceTest {
                 () -> new ValidacionHorario(22, 7)
         );
     }
+    
+
+    
+    
 }
