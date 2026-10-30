@@ -1,10 +1,10 @@
+
 package cr.ac.una.reservas.strategy;
 
 import cr.ac.una.reservas.exception.ReservaInvalidaException;
 import cr.ac.una.reservas.model.Reserva;
 
-public class ValidacionBasica
-        implements ValidadorReserva {
+public class ValidacionBasica implements ValidadorReserva {
 
     @Override
     public void validar(Reserva reserva)
@@ -36,13 +36,8 @@ public class ValidacionBasica
             );
         }
 
-        /*
-         * Existe un error intencional en esta condición.
-         * Utilice el depurador para identificarlo.
-         */
         if (reserva.getHoraInicio()
                 >= reserva.getHoraFinal()) {
-
             throw new ReservaInvalidaException(
                     "La hora final debe ser posterior "
                     + "a la hora inicial"
